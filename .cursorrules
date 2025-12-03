@@ -1,0 +1,207 @@
+# Next.js + Cloudflare Workers Template - AI Development Rules
+
+## 🚨 CRITICAL: Pre-Commit Requirements (NON-NEGOTIABLE)
+
+**NEVER commit code without ALL checks passing (green):**
+- ✅ `lint` - ESLint must pass with zero errors
+- ✅ `prettier` - Code must be properly formatted
+- ✅ `type-check` - TypeScript must compile without errors
+- ✅ `test` - All unit tests must pass
+- ✅ `commitlint` - Commit message must follow conventional commits
+- ✅ `actionlint` - GitHub Actions workflows must be valid
+
+**Commit Message Rules:**
+- **ALWAYS use conventional commits format**
+- **Maximum length: 100 characters**
+- Format: `<type>(<scope>): <subject>`
+- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
+- Examples:
+  - `feat(auth): add JWT token validation`
+  - `fix(api): resolve race condition in user fetch`
+  - `refactor(components): extract shared button logic`
+
+## 🏗️ Next.js Best Practices (Cloudflare Workers)
+
+### Server vs Client Components
+- **Default to Server Components** - Always use Server Components unless you need:
+  - Browser APIs (localStorage, window, document)
+  - Event handlers (onClick, onChange, etc.)
+  - React hooks (useState, useEffect, useContext)
+  - Interactive elements
+- **Mark Client Components explicitly** with `"use client"` at the top
+- **Keep Client Components small** - Extract server logic into Server Components
+- **Never import Server Components into Client Components**
+
+### Data Fetching
+- **Prefer Server Components for data fetching** - Use `async/await` directly in components
+- **Use `fetch` with proper caching strategies:**
+  ```typescript
+  // Revalidate every hour
+  fetch(url, { next: { revalidate: 3600 } })
+  
+  // Cache indefinitely
+  fetch(url, { cache: 'force-cache' })
+  
+  // Never cache
+  fetch(url, { cache: 'no-store' })
+  ```
+- **Parallel data fetching** - Use `Promise.all()` for independent requests
+- **Streaming with Suspense** - Use `<Suspense>` boundaries for better UX
+
+### Cloudflare Workers Specifics
+- **Environment variables** - Access via `getCloudflareContext()` in development
+- **Edge runtime** - Be aware of Node.js API limitations
+- **Use Cloudflare bindings** - KV, R2, D1 when needed
+- **Keep bundle size small** - Minimize client-side JavaScript
+- **Test with `wrangler dev`** before deploying
+
+### Performance Optimization
+- **Image optimization** - Always use `next/image` component
+- **Font optimization** - Use `next/font` for Google Fonts
+- **Code splitting** - Use dynamic imports for large components:
+  ```typescript
+  const HeavyComponent = dynamic(() => import('./HeavyComponent'))
+  ```
+- **Metadata API** - Use `generateMetadata` for SEO
+- **Minimize 'use client'** - Server Components are faster and smaller
+
+### Routing & Navigation
+- **Use App Router** - All routes in `src/app` directory
+- **File conventions:**
+  - `page.tsx` - Route pages
+  - `layout.tsx` - Shared layouts
+  - `loading.tsx` - Loading UI
+  - `error.tsx` - Error boundaries
+  - `not-found.tsx` - 404 pages
+- **Use `next/link`** for client-side navigation
+- **Programmatic navigation** - Use `useRouter()` from `next/navigation` (Client Component only)
+
+### TypeScript Standards
+- **Strict mode enabled** - No `any` types without good reason
+- **Use Next.js types:**
+  ```typescript
+  import type { Metadata } from 'next'
+  import type { NextRequest } from 'next/server'
+  ```
+- **Type component props explicitly**
+- **Use generic types for reusable components**
+
+### Testing Strategy
+- **Unit tests with Vitest** for utilities and hooks
+- **Component tests** for React components
+- **Integration tests** for API routes
+- **Visual regression tests with Chromatic** for UI components
+- **Test file naming**: `*.test.ts` or `*.spec.ts`
+- **Minimum 70% code coverage** for critical paths
+
+### Error Handling & Monitoring
+- **Sentry integration** - Always wrap components with Sentry error boundaries
+- **Error boundaries** - Use `error.tsx` for graceful error handling
+- **Logging** - Use Sentry breadcrumbs for debugging context
+- **Never expose sensitive errors** to users in production
+
+### Security Best Practices
+- **Validate all inputs** - Use Zod or similar for schema validation
+- **Sanitize user content** - Prevent XSS attacks
+- **Use environment variables** for secrets (never commit secrets)
+- **Set proper CORS headers** in API routes
+- **Implement rate limiting** for API endpoints
+
+### Code Organization
+- **Consistent file structure:**
+  ```
+  src/
+    app/           # Next.js App Router pages
+    components/    # Reusable React components
+    lib/           # Utility functions and shared logic
+    hooks/         # Custom React hooks
+    types/         # TypeScript type definitions
+    styles/        # Global styles and Tailwind config
+  ```
+- **Group by feature** when applications grow large
+- **Separate concerns** - Keep business logic separate from UI
+
+### Styling Guidelines
+- **Use Tailwind CSS** - Utility-first approach
+- **CSS Modules** for component-specific styles when needed
+- **Responsive design** - Mobile-first approach
+- **Dark mode support** - Use Tailwind's dark mode utilities
+- **Consistent spacing** - Use Tailwind's spacing scale
+
+## 🎨 Chromatic Integration
+
+- **Base branch**: `dev` - All Chromatic baselines are on dev
+- **Visual regression testing** - Run Chromatic on PRs to dev
+- **Review UI changes** - Approve all visual changes before merging
+- **Storybook stories** - Create stories for all presentational components
+- **Snapshot testing** - Automated visual diffs on every PR
+
+## 🐛 Sentry Integration
+
+- **Error tracking** - All runtime errors captured and reported
+- **Performance monitoring** - Track Core Web Vitals and API performance
+- **Release tracking** - Tag errors with semantic version
+- **Source maps** - Upload source maps for readable stack traces
+- **User context** - Include user info (when available) for debugging
+- **Environment separation** - Different Sentry projects for dev/prod
+
+## 📦 Dependencies & Package Management
+
+- **Use pnpm** - Faster and more efficient than npm
+- **Keep dependencies updated** - Run `pnpm update` regularly
+- **Audit security** - Run `pnpm audit` before releases
+- **Lock file committed** - Always commit `pnpm-lock.yaml`
+- **No unused dependencies** - Remove unused packages
+
+## 🔄 Workflow & CI/CD
+
+- **Branch strategy**: `pr -> dev -> main`
+- **PRs to dev** - Deploy ephemeral previews, run Chromatic
+- **Dev branch** - RC versions (1.2.0-rc.1), auto-deployed
+- **Main branch** - Stable versions (1.2.0), production deployment
+- **All checks must pass** before merge
+- **Semantic versioning** - Automated via semantic-release
+
+## 📝 Documentation
+
+- **README.md** - Keep updated with setup instructions
+- **Code comments** - Explain "why", not "what"
+- **JSDoc comments** - For public APIs and complex functions
+- **Changelog** - Auto-generated via semantic-release
+- **Storybook docs** - Document component usage and props
+
+## 🎯 Development Workflow
+
+1. **Create feature branch** from `dev`
+2. **Write code** following all rules above
+3. **Write tests** for new functionality
+4. **Run all checks locally** before committing
+5. **Commit with conventional commits**
+6. **Open PR to dev** - Wait for checks and Chromatic review
+7. **Address feedback** and update PR
+8. **Merge when approved** and all checks pass
+9. **Verify dev deployment** works correctly
+10. **Promote to main** when ready for production
+
+## ⚡ Performance Targets
+
+- **Lighthouse Score** - 90+ for all metrics
+- **First Contentful Paint** - < 1.5s
+- **Time to Interactive** - < 3.5s
+- **Cumulative Layout Shift** - < 0.1
+- **Bundle size** - Keep under 100KB for initial page load
+
+## 🔧 Common Pitfalls to Avoid
+
+- ❌ Don't use `useEffect` for data fetching in Server Components
+- ❌ Don't mix Server and Client Component imports incorrectly
+- ❌ Don't commit without running all checks
+- ❌ Don't use relative imports beyond 2 levels (use aliases)
+- ❌ Don't ignore TypeScript errors with `@ts-ignore` without explanation
+- ❌ Don't skip writing tests for new features
+- ❌ Don't merge PRs with failing Chromatic visual changes
+- ❌ Don't deploy without verifying Sentry is capturing errors
+
+---
+
+**Remember: Quality over speed. All checks must be green before committing!**
