@@ -11,7 +11,7 @@
 		"moduleResolution": "bundler",
 		"resolveJsonModule": true,
 		"isolatedModules": true,
-		"jsx": "react-jsx",
+		"jsx": "preserve",
 		"incremental": true,
 		"plugins": [
 			{
@@ -21,7 +21,7 @@
 		"paths": {
 			"@/*": ["./src/*"]
 		},
-		"types": ["./env.d.ts", "node"]
+		"types": ["./env.d.ts", "node", "vitest/globals"]
 	},
 	"include": [
 		"next-env.d.ts",

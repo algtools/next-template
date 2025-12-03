@@ -1,5 +1,6 @@
 {
 	"name": "next-template",
+	"version": "0.0.0",
 	"description": "Build a full-stack web application with Next.js.",
 	"cloudflare": {
 		"label": "Next.js Framework Starter",
@@ -13,31 +14,79 @@
 	},
 	"dependencies": {
 		"@opennextjs/cloudflare": "1.14.0",
+		"@sentry/nextjs": "^8.40.0",
 		"next": "16.0.5",
 		"react": "19.2.0",
 		"react-dom": "19.2.0"
 	},
 	"devDependencies": {
+		"@chromatic-com/storybook": "^3.2.2",
+		"@commitlint/cli": "^19.6.0",
+		"@commitlint/config-conventional": "^19.6.0",
 		"@eslint/eslintrc": "3",
+		"@semantic-release/changelog": "^6.0.3",
+		"@semantic-release/git": "^10.0.1",
+		"@storybook/addon-essentials": "^8.5.0",
+		"@storybook/addon-interactions": "^8.5.0",
+		"@storybook/addon-links": "^8.5.0",
+		"@storybook/blocks": "^8.5.0",
+		"@storybook/nextjs": "^8.5.0",
+		"@storybook/react": "^8.5.0",
+		"@storybook/test": "^8.5.0",
 		"@tailwindcss/postcss": "4.1.17",
+		"@testing-library/jest-dom": "^6.6.3",
+		"@testing-library/react": "^16.1.0",
+		"@testing-library/user-event": "^14.5.2",
 		"@types/node": "24.10.1",
 		"@types/react": "19.2.7",
 		"@types/react-dom": "19.2.3",
+		"@vitejs/plugin-react": "^4.3.4",
+		"@vitest/ui": "^2.1.8",
+		"chromatic": "^11.18.1",
 		"eslint": "9.39.1",
 		"eslint-config-next": "16.0.5",
+		"eslint-plugin-storybook": "^0.11.1",
+		"husky": "^9.1.7",
+		"jsdom": "^25.0.1",
+		"lint-staged": "^15.2.11",
+		"prettier": "^3.4.2",
+		"prettier-plugin-tailwindcss": "^0.6.9",
+		"semantic-release": "^24.2.0",
+		"storybook": "^8.5.0",
 		"tailwindcss": "4.1.17",
 		"typescript": "5.9.3",
+		"vitest": "^2.1.8",
 		"wrangler": "4.51.0"
 	},
 	"private": true,
 	"scripts": {
 		"build": "next build",
+		"build:storybook": "storybook build",
 		"cf-typegen": "wrangler types --env-interface CloudflareEnv env.d.ts",
-		"check": "npm run build && tsc",
+		"check": "pnpm run build && tsc",
 		"deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
 		"dev": "next dev",
+		"format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
+		"format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
 		"lint": "next lint",
+		"lint:fix": "next lint --fix",
+		"prepare": "husky install",
 		"preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-		"start": "next start"
+		"start": "next start",
+		"storybook": "storybook dev -p 6006",
+		"test": "vitest run",
+		"test:ui": "vitest --ui",
+		"test:watch": "vitest watch",
+		"type-check": "tsc --noEmit"
+	},
+	"lint-staged": {
+		"*.{js,jsx,ts,tsx}": [
+			"eslint --fix",
+			"prettier --write",
+			"vitest related --run"
+		],
+		"*.{json,css,md}": [
+			"prettier --write"
+		]
 	}
 }
