@@ -32,8 +32,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build application
-        run: pnpm run build
+      - name: Build application with OpenNext
+        run: |
+          pnpm run build
+          pnpm exec opennextjs-cloudflare
         env:
           NEXT_PUBLIC_SENTRY_ENVIRONMENT: preview
           NEXT_PUBLIC_APP_VERSION: pr-${{ github.event.pull_request.number }}
@@ -72,10 +74,8 @@ jobs:
         run: |
           pnpm exec wrangler deploy \
             --name "preview-${{ github.event.pull_request.number }}-${GITHUB_REPOSITORY##*/}" \
-            --env preview \
             --var ENVIRONMENT:preview \
-            --var PR_NUMBER:${{ github.event.pull_request.number }} \
-            --compatibility-date $(date +%Y-%m-%d) > deploy-output.txt
+            --var PR_NUMBER:${{ github.event.pull_request.number }}
           echo "deployment-url=https://preview-${{ github.event.pull_request.number }}-${GITHUB_REPOSITORY##*/}.${CLOUDFLARE_ACCOUNT_ID}.workers.dev" >> $GITHUB_OUTPUT
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
