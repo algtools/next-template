@@ -201,3 +201,17 @@ dist
 ### OpenNext ###
 .open-next/
 next-env.d.ts
+
+### Testing ###
+coverage/
+.vitest/
+
+### Storybook ###
+storybook-static/
+build-storybook.log
+
+### Sentry ###
+.sentryclirc
+
+### Semantic Release ###
+CHANGELOG.md
