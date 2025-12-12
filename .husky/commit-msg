@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Enforce Conventional Commits + 100-char header limit
+pnpm exec commitlint --edit "$1"
