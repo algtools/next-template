@@ -48,11 +48,7 @@ export function TodoApp({
 
 	const tasksUrl = `${apiBasePath}/tasks`;
 
-	const {
-		data: tasks = [],
-		isLoading,
-		mutate,
-	} = useSWR<Task[]>(
+	const { data: tasks = [], mutate } = useSWR<Task[]>(
 		tasksUrl,
 		async (url) => {
 			const env = await jsonFetcher<ApiEnvelope<Task[]>>(url);
@@ -155,7 +151,6 @@ export function TodoApp({
 	async function clearCompleted() {
 		setErrorMsg(null);
 		const completed = tasks.filter((t) => t.completed);
-		if (completed.length === 0) return;
 
 		try {
 			await Promise.all(
@@ -199,11 +194,9 @@ export function TodoApp({
 
 				<div className="flex items-center justify-between text-sm text-muted-foreground">
 					<span>
-						{isLoading && tasks.length === 0
-							? "Loading…"
-							: tasks.length === 0
-								? "No tasks yet."
-								: `${remaining} remaining • ${tasks.length} total`}
+						{tasks.length === 0
+							? "No tasks yet."
+							: `${remaining} remaining • ${tasks.length} total`}
 					</span>
 					<Button
 						type="button"
@@ -244,7 +237,7 @@ export function TodoApp({
 							</Button>
 						</li>
 					))}
-					{!isLoading && tasks.length === 0 ? (
+					{tasks.length === 0 ? (
 						<li className="px-6 py-4 text-sm text-muted-foreground">
 							Add your first task above.
 						</li>
