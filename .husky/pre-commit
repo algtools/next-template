@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Fast staged-file checks (format only)
+pnpm exec lint-staged
+
+# Project-wide gates (enforced)
+pnpm lint
+pnpm typecheck
+pnpm test
