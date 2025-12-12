@@ -1,31 +1,94 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TodoApp } from "./TodoApp";
+import { SWRConfig } from "swr";
+import type { Task } from "@/lib/api/tasks";
 
 describe("TodoApp", () => {
+	let tasks: Task[];
+	let nextId: number;
+
 	beforeEach(() => {
-		window.localStorage.clear();
+		tasks = [];
+		nextId = 1;
+
+		const jsonResponse = (body: unknown, status = 200) =>
+			new Response(JSON.stringify(body), {
+				status,
+				headers: { "content-type": "application/json" },
+			});
+
+		// Minimal fetch mock that behaves like our `/api/tasks` proxy
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+				const url = typeof input === "string" ? input : input.toString();
+				const method = (init?.method ?? "GET").toUpperCase();
+
+				if (url.endsWith("/api/tasks") && method === "GET") {
+					return jsonResponse({ success: true, result: tasks });
+				}
+				if (url.endsWith("/api/tasks") && method === "POST") {
+					const body = JSON.parse(String(init?.body ?? "{}")) as Omit<
+						Task,
+						"id"
+					>;
+					const created: Task = { id: nextId++, ...body };
+					tasks = [created, ...tasks];
+					return jsonResponse({ success: true, result: created }, 201);
+				}
+
+				const m = url.match(/\/api\/tasks\/(\d+)$/);
+				if (m) {
+					const id = Number(m[1]);
+					if (method === "PUT") {
+						const body = JSON.parse(String(init?.body ?? "{}")) as Omit<
+							Task,
+							"id"
+						>;
+						const updated: Task = { id, ...body };
+						tasks = tasks.map((t) => (t.id === id ? updated : t));
+						return jsonResponse({ success: true, result: updated });
+					}
+					if (method === "DELETE") {
+						const found = tasks.find((t) => t.id === id);
+						tasks = tasks.filter((t) => t.id !== id);
+						return jsonResponse({ success: true, result: found ?? null });
+					}
+				}
+
+				return jsonResponse({ success: false, error: "not mocked" }, 500);
+			}),
+		);
 	});
 
 	afterEach(() => {
 		cleanup();
 	});
 
+	function renderApp(opts?: { initialTasks?: Task[] }) {
+		render(
+			<SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
+				<TodoApp initialTasks={opts?.initialTasks ?? []} />
+			</SWRConfig>,
+		);
+	}
+
 	it("adds a todo", async () => {
 		const user = userEvent.setup();
-		render(<TodoApp storageKey="test:todos" />);
+		renderApp();
 
 		await user.type(screen.getByLabelText("New task"), "Buy milk");
 		await user.click(screen.getByRole("button", { name: "Add" }));
 
-		expect(screen.getByText("Buy milk")).toBeInTheDocument();
+		expect(await screen.findByText("Buy milk")).toBeInTheDocument();
 	});
 
 	it("does not add empty/whitespace-only todos", async () => {
 		const user = userEvent.setup();
-		render(<TodoApp storageKey="test:todos:empty" />);
+		renderApp();
 
 		await user.type(screen.getByLabelText("New task"), "   ");
 		await user.click(screen.getByRole("button", { name: "Add" }));
@@ -35,7 +98,7 @@ describe("TodoApp", () => {
 
 	it("toggles a todo completed", async () => {
 		const user = userEvent.setup();
-		render(<TodoApp storageKey="test:todos:toggle" />);
+		renderApp();
 
 		await user.type(screen.getByLabelText("New task"), "Write tests");
 		await user.click(screen.getByRole("button", { name: "Add" }));
@@ -51,7 +114,7 @@ describe("TodoApp", () => {
 
 	it("clears completed todos", async () => {
 		const user = userEvent.setup();
-		render(<TodoApp storageKey="test:todos:clear" />);
+		renderApp();
 
 		await user.type(screen.getByLabelText("New task"), "A");
 		await user.click(screen.getByRole("button", { name: "Add" }));
@@ -64,13 +127,13 @@ describe("TodoApp", () => {
 
 		await user.click(screen.getByRole("button", { name: "Clear completed" }));
 
+		expect(await screen.findByText("B")).toBeInTheDocument();
 		expect(screen.queryByText("A")).not.toBeInTheDocument();
-		expect(screen.getByText("B")).toBeInTheDocument();
 	});
 
 	it("deletes a todo", async () => {
 		const user = userEvent.setup();
-		render(<TodoApp storageKey="test:todos:delete" />);
+		renderApp();
 
 		await user.type(screen.getByLabelText("New task"), "Throw trash");
 		await user.click(screen.getByRole("button", { name: "Add" }));
@@ -79,58 +142,5 @@ describe("TodoApp", () => {
 			screen.getByRole("button", { name: 'Delete "Throw trash"' }),
 		);
 		expect(screen.queryByText("Throw trash")).not.toBeInTheDocument();
-	});
-
-	it("hydrates from localStorage and ignores invalid stored JSON", async () => {
-		const user = userEvent.setup();
-
-		window.localStorage.setItem(
-			"test:todos:hydrate",
-			JSON.stringify([
-				{ id: "1", text: "Persisted", completed: false, createdAt: 1 },
-				{ id: "bad", text: 123, completed: false, createdAt: 1 },
-			]),
-		);
-		window.localStorage.setItem("test:todos:badjson", "{not json");
-
-		render(
-			<>
-				<TodoApp storageKey="test:todos:hydrate" />
-				<TodoApp storageKey="test:todos:badjson" />
-			</>,
-		);
-
-		expect(await screen.findByText("Persisted")).toBeInTheDocument();
-		expect(screen.getAllByText("No tasks yet.").length).toBeGreaterThan(0);
-
-		// ensure persistence path executes (write-back)
-		await user.click(
-			screen.getByRole("checkbox", { name: 'Mark "Persisted" as completed' }),
-		);
-		expect(window.localStorage.getItem("test:todos:hydrate")).toContain(
-			"Persisted",
-		);
-	});
-
-	it("falls back to non-crypto ids when crypto.randomUUID is unavailable", async () => {
-		const user = userEvent.setup();
-		const originalCrypto = window.crypto;
-
-		// Make crypto exist but without randomUUID to hit the fallback branch
-		Object.defineProperty(window, "crypto", {
-			value: {},
-			configurable: true,
-		});
-
-		render(<TodoApp storageKey="test:todos:idfallback" />);
-		await user.type(screen.getByLabelText("New task"), "ID fallback");
-		await user.click(screen.getByRole("button", { name: "Add" }));
-		expect(screen.getByText("ID fallback")).toBeInTheDocument();
-
-		// restore
-		Object.defineProperty(window, "crypto", {
-			value: originalCrypto,
-			configurable: true,
-		});
 	});
 });
