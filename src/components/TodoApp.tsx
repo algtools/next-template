@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -10,94 +11,157 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import type { ApiEnvelope, Task, TaskUpsertInput } from "@/lib/api/tasks";
+import { slugify } from "@/lib/slugify";
 
-type Todo = {
-	id: string;
-	text: string;
-	completed: boolean;
-	createdAt: number;
-};
-
-function newId() {
-	if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-		return crypto.randomUUID();
+async function jsonFetcher<T>(url: string): Promise<T> {
+	const res = await fetch(url, { headers: { accept: "application/json" } });
+	const body = (await res.json().catch(() => null)) as unknown;
+	if (!res.ok) {
+		throw new Error(`Request failed: ${res.status}`);
 	}
-	return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+	return body as T;
 }
 
-function safeParseTodos(raw: string | null): Todo[] {
-	if (!raw) return [];
-	try {
-		const parsed = JSON.parse(raw) as unknown;
-		if (!Array.isArray(parsed)) return [];
-		return parsed
-			.filter((t): t is Todo => {
-				return (
-					typeof t === "object" &&
-					t !== null &&
-					"id" in t &&
-					"text" in t &&
-					"completed" in t &&
-					"createdAt" in t &&
-					typeof (t as { id: unknown }).id === "string" &&
-					typeof (t as { text: unknown }).text === "string" &&
-					typeof (t as { completed: unknown }).completed === "boolean" &&
-					typeof (t as { createdAt: unknown }).createdAt === "number"
-				);
-			})
-			.map((t) => ({
-				id: t.id,
-				text: t.text,
-				completed: t.completed,
-				createdAt: t.createdAt,
-			}));
-	} catch {
-		return [];
-	}
+async function apiJson<T>(url: string, init: RequestInit) {
+	const res = await fetch(url, {
+		...init,
+		headers: {
+			accept: "application/json",
+			...(init.headers ?? {}),
+		},
+	});
+	const body = (await res.json().catch(() => null)) as unknown;
+	if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+	return body as T;
 }
 
-export function TodoApp({ storageKey = "todos:v1" }: { storageKey?: string }) {
-	const [todos, setTodos] = useState<Todo[]>([]);
+export function TodoApp({
+	initialTasks,
+	apiBasePath = "/api",
+}: {
+	initialTasks?: Task[];
+	apiBasePath?: string;
+}) {
 	const [text, setText] = useState("");
-	const hydratedRef = useRef(false);
+	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-	useEffect(() => {
-		setTodos(safeParseTodos(window.localStorage.getItem(storageKey)));
-		hydratedRef.current = true;
-	}, [storageKey]);
+	const tasksUrl = `${apiBasePath}/tasks`;
 
-	useEffect(() => {
-		if (!hydratedRef.current) return;
-		window.localStorage.setItem(storageKey, JSON.stringify(todos));
-	}, [storageKey, todos]);
-
-	const remaining = useMemo(
-		() => todos.filter((t) => !t.completed).length,
-		[todos],
+	const { data: tasks = [], mutate } = useSWR<Task[]>(
+		tasksUrl,
+		async (url) => {
+			const env = await jsonFetcher<ApiEnvelope<Task[]>>(url);
+			if (!env?.success) throw new Error("API returned success=false");
+			return env.result;
+		},
+		{
+			fallbackData: initialTasks ?? [],
+			revalidateOnFocus: false,
+		},
 	);
 
-	function addTodo() {
-		const trimmed = text.trim();
-		if (!trimmed) return;
-		setTodos((prev) => [
-			{ id: newId(), text: trimmed, completed: false, createdAt: Date.now() },
-			...prev,
-		]);
-		setText("");
+	const remaining = useMemo(
+		() => tasks.filter((t) => !t.completed).length,
+		[tasks],
+	);
+
+	function buildUpsertInput(name: string, completed: boolean): TaskUpsertInput {
+		const base = slugify(name);
+		const suffix = Math.random().toString(16).slice(2, 8);
+		const dueDate = new Date(
+			Date.now() + 7 * 24 * 60 * 60 * 1000,
+		).toISOString();
+
+		return {
+			name,
+			slug: `${base || "task"}-${suffix}`,
+			description: "",
+			completed,
+			due_date: dueDate,
+		};
 	}
 
-	function toggleTodo(id: string) {
-		setTodos((prev) =>
-			prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
+	async function addTask() {
+		const trimmed = text.trim();
+		if (!trimmed) return;
+		setErrorMsg(null);
+
+		try {
+			await apiJson<ApiEnvelope<Task>>(tasksUrl, {
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify(buildUpsertInput(trimmed, false)),
+			});
+			setText("");
+			await mutate();
+		} catch (e) {
+			setErrorMsg(e instanceof Error ? e.message : "Failed to add task");
+		}
+	}
+
+	async function toggleTask(task: Task) {
+		setErrorMsg(null);
+		const optimistic = tasks.map((t) =>
+			t.id === task.id ? { ...t, completed: !t.completed } : t,
+		);
+
+		await mutate(
+			async () => {
+				const input: TaskUpsertInput = {
+					name: task.name,
+					slug: task.slug,
+					description: task.description,
+					completed: !task.completed,
+					due_date: task.due_date,
+				};
+
+				await apiJson<ApiEnvelope<Task>>(`${tasksUrl}/${task.id}`, {
+					method: "PUT",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify(input),
+				});
+
+				// Revalidate to ensure we match backend state
+				return optimistic;
+			},
+			{ optimisticData: optimistic, rollbackOnError: true, revalidate: true },
+		).catch((e) =>
+			setErrorMsg(e instanceof Error ? e.message : "Update failed"),
 		);
 	}
 
-	function removeTodo(id: string) {
-		setTodos((prev) => prev.filter((t) => t.id !== id));
+	async function removeTask(id: number) {
+		setErrorMsg(null);
+		const optimistic = tasks.filter((t) => t.id !== id);
+
+		await mutate(
+			async () => {
+				await apiJson<ApiEnvelope<Task>>(`${tasksUrl}/${id}`, {
+					method: "DELETE",
+				});
+				return optimistic;
+			},
+			{ optimisticData: optimistic, rollbackOnError: true, revalidate: true },
+		).catch((e) =>
+			setErrorMsg(e instanceof Error ? e.message : "Delete failed"),
+		);
 	}
 
-	function clearCompleted() {
-		setTodos((prev) => prev.filter((t) => !t.completed));
+	async function clearCompleted() {
+		setErrorMsg(null);
+		const completed = tasks.filter((t) => t.completed);
+
+		try {
+			await Promise.all(
+				completed.map((t) =>
+					apiJson(`${tasksUrl}/${t.id}`, { method: "DELETE" }),
+				),
+			);
+			await mutate();
+		} catch (e) {
+			setErrorMsg(e instanceof Error ? e.message : "Failed to clear completed");
+		}
 	}
 
 	return (
@@ -107,7 +171,7 @@ export function TodoApp({ storageKey = "todos:v1" }: { storageKey?: string }) {
 					className="flex items-center gap-2"
 					onSubmit={(e) => {
 						e.preventDefault();
-						addTodo();
+						void addTask();
 					}}
 				>
 					<label className="sr-only" htmlFor="new-task">
@@ -122,18 +186,24 @@ export function TodoApp({ storageKey = "todos:v1" }: { storageKey?: string }) {
 					<Button type="submit">Add</Button>
 				</form>
 
+				{errorMsg ? (
+					<div className="text-sm text-destructive" role="alert">
+						{errorMsg}
+					</div>
+				) : null}
+
 				<div className="flex items-center justify-between text-sm text-muted-foreground">
 					<span>
-						{todos.length === 0
+						{tasks.length === 0
 							? "No tasks yet."
-							: `${remaining} remaining • ${todos.length} total`}
+							: `${remaining} remaining • ${tasks.length} total`}
 					</span>
 					<Button
 						type="button"
 						variant="ghost"
 						size="sm"
 						onClick={clearCompleted}
-						disabled={!todos.some((t) => t.completed)}
+						disabled={!tasks.some((t) => t.completed)}
 					>
 						Clear completed
 					</Button>
@@ -142,32 +212,32 @@ export function TodoApp({ storageKey = "todos:v1" }: { storageKey?: string }) {
 
 			<CardContent className="px-0">
 				<ul className="divide-y">
-					{todos.map((t) => (
+					{tasks.map((t) => (
 						<li key={t.id} className="flex items-center gap-3 px-6 py-3">
 							<Checkbox
-								aria-label={`Mark "${t.text}" as completed`}
+								aria-label={`Mark "${t.name}" as completed`}
 								checked={t.completed}
-								onCheckedChange={() => toggleTodo(t.id)}
+								onCheckedChange={() => void toggleTask(t)}
 							/>
 							<span
 								className={`flex-1 text-sm ${
 									t.completed ? "text-muted-foreground line-through" : ""
 								}`}
 							>
-								{t.text}
+								{t.name}
 							</span>
 							<Button
 								type="button"
 								variant="ghost"
 								size="sm"
-								onClick={() => removeTodo(t.id)}
-								aria-label={`Delete "${t.text}"`}
+								onClick={() => void removeTask(t.id)}
+								aria-label={`Delete "${t.name}"`}
 							>
 								Delete
 							</Button>
 						</li>
 					))}
-					{todos.length === 0 ? (
+					{tasks.length === 0 ? (
 						<li className="px-6 py-4 text-sm text-muted-foreground">
 							Add your first task above.
 						</li>
@@ -177,7 +247,7 @@ export function TodoApp({ storageKey = "todos:v1" }: { storageKey?: string }) {
 
 			<CardFooter className="justify-end">
 				<span className="text-xs text-muted-foreground">
-					Saved locally in this browser.
+					Synced via Next.js Route Handlers (`/api/tasks`) to the upstream API.
 				</span>
 			</CardFooter>
 		</Card>
