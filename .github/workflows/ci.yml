@@ -58,7 +58,7 @@ jobs:
         run: |
           # Never publish Chromatic from production branch
           BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
-          if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "dev" ]; then
+          if [ "$BRANCH" = "main" ]; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             echo "Chromatic skipped on $BRANCH." >> "$GITHUB_STEP_SUMMARY"
             exit 0
