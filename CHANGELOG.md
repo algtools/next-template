@@ -1,3 +1,10 @@
+# [1.0.0-rc.2](https://github.com/algtools/next-template/compare/v1.0.0-rc.1...v1.0.0-rc.2) (2025-12-13)
+
+
+### Features
+
+* integrate storybook ([72c57c8](https://github.com/algtools/next-template/commit/72c57c8bc2114ba1bfa9e993f479edf5198ec87c))
+
 # 1.0.0-rc.1 (2025-12-13)
 
 
