@@ -16,4 +16,4 @@ next-env.d.ts
 next-config.ts
 open-next.config.ts
 vitest.config.ts
-
+CHANGELOG.md
