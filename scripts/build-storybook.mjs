@@ -84,6 +84,7 @@ let sawOutputDir = false;
 let lastOutputAt = Date.now();
 let successKillTimer = null;
 let hardTimeoutTimer = null;
+let forcedSuccessExit = false;
 
 let lineBuf = "";
 function handleChunk(chunk) {
@@ -107,6 +108,7 @@ function handleChunk(chunk) {
 					if (child.exitCode != null) return;
 					// Once we’ve seen success, 2s of silence is enough to consider it done.
 					if (Date.now() - lastOutputAt >= 2000) {
+						forcedSuccessExit = true;
 						await killProcessTree(child.pid);
 						process.exit(0);
 					}
@@ -134,6 +136,8 @@ child.on("error", () => {
 child.on("close", (code, signal) => {
 	if (successKillTimer) clearInterval(successKillTimer);
 	if (hardTimeoutTimer) clearTimeout(hardTimeoutTimer);
+	// If we intentionally terminated a hung-but-successful build, treat it as success.
+	if (forcedSuccessExit) process.exit(0);
 	if (signal) process.exit(1);
 	process.exit(typeof code === "number" ? code : 1);
 });
