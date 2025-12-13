@@ -49,13 +49,21 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
-    env:
-      CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
     steps:
       - name: Check Chromatic token
         id: gate
         shell: bash
+        env:
+          CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
         run: |
+          # Never publish Chromatic from production branch
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-}}"
+          if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "dev" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Chromatic skipped on $BRANCH." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
           if [ -n "${CHROMATIC_PROJECT_TOKEN:-}" ]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
           else
@@ -86,9 +94,11 @@ jobs:
         id: chromatic
         uses: chromaui/action@v1
         with:
-          projectToken: ${{ env.CHROMATIC_PROJECT_TOKEN }}
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           buildScriptName: build-storybook
           exitOnceUploaded: true
+          # Note: Chromatic "main branch" is configured in Chromatic project settings.
+          # This workflow avoids publishing from `main` and publishes from `dev` + all other branches.
 
       - name: Write Chromatic link to run summary
         if: ${{ steps.gate.outputs.enabled == 'true' }}
