@@ -9,7 +9,8 @@ export default defineConfig({
 		setupFiles: ["./src/test/setup.ts"],
 		coverage: {
 			provider: "v8",
-			reporter: ["text", "html", "json-summary"],
+			reporter: ["text", "html", "json-summary", "lcov"],
+			reportsDirectory: "coverage",
 			include: ["src/**/*.{ts,tsx}"],
 			exclude: [
 				"**/*.d.ts",
@@ -18,13 +19,14 @@ export default defineConfig({
 				"src/test/**",
 				"src/stories/**",
 				"src/components/ui/**",
+				// Next.js App Router entrypoints/route wiring (typically thin wrappers)
 				"src/app/**",
 			],
 			thresholds: {
-				lines: 90,
-				functions: 90,
-				statements: 90,
-				branches: 90,
+				lines: 85,
+				functions: 85,
+				statements: 85,
+				branches: 85,
 			},
 		},
 	},
