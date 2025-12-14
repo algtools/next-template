@@ -245,8 +245,7 @@ export function TodoApp({
 				</ul>
 			</CardContent>
 
-			<CardFooter className="justify-end">
-			</CardFooter>
+			<CardFooter className="justify-end"></CardFooter>
 		</Card>
 	);
 }
