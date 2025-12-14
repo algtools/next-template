@@ -1,7 +1,12 @@
 import type { Decorator, Meta, StoryObj } from "@storybook/react";
 import { SWRConfig } from "swr";
 import { TodoApp } from "@/components/TodoApp";
-import type { Task } from "@/lib/api/tasks";
+import {
+	todoAppDefaultTasks,
+	todoAppEmptyTasks,
+	todoAppLongListTasks,
+	todoAppMixedCompletionTasks,
+} from "@/stories/mocks/tasks";
 
 const withSWR: Decorator = (Story, context) => (
 	<SWRConfig value={{ revalidateOnMount: false, revalidateOnFocus: false }}>
@@ -19,28 +24,62 @@ export default meta;
 
 type Story = StoryObj<typeof TodoApp>;
 
-const sampleTasks: Task[] = [
-	{
-		id: 1,
-		name: "Buy coffee",
-		slug: "buy-coffee-aaaaaa",
-		description: "",
-		completed: false,
-		due_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-	},
-	{
-		id: 2,
-		name: "Write docs",
-		slug: "write-docs-bbbbbb",
-		description: "",
-		completed: true,
-		due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-	},
-];
-
 export const Default: Story = {
 	args: {
-		initialTasks: sampleTasks,
+		initialTasks: todoAppDefaultTasks,
 		apiBasePath: "/api",
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					"Shows the signed-out experience with a few planning tasks already loaded from the API.",
+			},
+		},
+	},
+};
+
+export const EmptyState: Story = {
+	args: {
+		initialTasks: todoAppEmptyTasks,
+		apiBasePath: "/api",
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					"Demonstrates the onboarding copy and disabled clear button when no tasks exist yet.",
+			},
+		},
+	},
+};
+
+export const WithCompletedTasks: Story = {
+	args: {
+		initialTasks: todoAppMixedCompletionTasks,
+		apiBasePath: "/api",
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					"Highlights the line-through styling and the enabled “Clear completed” control when at least one task is done.",
+			},
+		},
+	},
+};
+
+export const WithLargerBacklog: Story = {
+	args: {
+		initialTasks: todoAppLongListTasks,
+		apiBasePath: "/api",
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					"Provides a scrollable backlog to exercise dividers, spacing, and keyboard nav across many items.",
+			},
+		},
 	},
 };

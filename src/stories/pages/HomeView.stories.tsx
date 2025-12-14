@@ -1,7 +1,11 @@
 import type { Decorator, Meta, StoryObj } from "@storybook/react";
 import { SWRConfig } from "swr";
-import type { Task } from "@/lib/api/tasks";
 import { HomeView } from "@/views/HomeView";
+import {
+	todoAppDefaultTasks,
+	todoAppEmptyTasks,
+	todoAppLongListTasks,
+} from "@/stories/mocks/tasks";
 
 const withSWR: Decorator = (Story, context) => (
 	<SWRConfig value={{ revalidateOnMount: false, revalidateOnFocus: false }}>
@@ -13,33 +17,45 @@ const meta: Meta<typeof HomeView> = {
 	title: "Pages/HomeView",
 	component: HomeView,
 	decorators: [withSWR],
+	parameters: {
+		layout: "fullscreen",
+	},
 };
 
 export default meta;
 
 type Story = StoryObj<typeof HomeView>;
 
-const initialTasks: Task[] = [
-	{
-		id: 1,
-		name: "Buy coffee",
-		slug: "buy-coffee-aaaaaa",
-		description: "",
-		completed: false,
-		due_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-	},
-	{
-		id: 2,
-		name: "Write docs",
-		slug: "write-docs-bbbbbb",
-		description: "",
-		completed: true,
-		due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-	},
-];
-
 export const Default: Story = {
 	args: {
-		initialTasks,
+		initialTasks: todoAppDefaultTasks,
+	},
+};
+
+export const EmptyList: Story = {
+	args: {
+		initialTasks: todoAppEmptyTasks,
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					"Renders the onboarding copy that greets users before any tasks exist.",
+			},
+		},
+	},
+};
+
+export const ReleaseReadyBacklog: Story = {
+	args: {
+		initialTasks: todoAppLongListTasks,
+	},
+	parameters: {
+		docs: {
+			description: {
+				story:
+					"Useful to validate spacing, scrolling, and typography when the list is packed with upcoming milestones.",
+			},
+		},
 	},
 };
