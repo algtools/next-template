@@ -3,12 +3,7 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import type { ApiEnvelope, Task, TaskUpsertInput } from "@/lib/api/tasks";
@@ -166,9 +161,9 @@ export function TodoApp({
 
 	return (
 		<Card aria-label="Todo list" className="shadow-sm">
-			<CardHeader className="gap-3">
+			<CardHeader className="gap-4">
 				<form
-					className="flex items-center gap-2"
+					className="flex flex-col gap-2 sm:flex-row sm:items-center"
 					onSubmit={(e) => {
 						e.preventDefault();
 						void addTask();
@@ -182,8 +177,11 @@ export function TodoApp({
 						value={text}
 						onChange={(e) => setText(e.target.value)}
 						placeholder="Add a task…"
+						className="w-full"
 					/>
-					<Button type="submit">Add</Button>
+					<Button type="submit" className="w-full sm:w-auto sm:flex-shrink-0">
+						Add
+					</Button>
 				</form>
 
 				{errorMsg ? (
@@ -192,7 +190,7 @@ export function TodoApp({
 					</div>
 				) : null}
 
-				<div className="flex items-center justify-between text-sm text-muted-foreground">
+				<div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
 					<span>
 						{tasks.length === 0
 							? "No tasks yet."
@@ -244,12 +242,6 @@ export function TodoApp({
 					) : null}
 				</ul>
 			</CardContent>
-
-			<CardFooter className="justify-end">
-				<span className="text-xs text-muted-foreground">
-					Synced via Next.js Route Handlers (`/api/tasks`) to the upstream API.
-				</span>
-			</CardFooter>
 		</Card>
 	);
 }
