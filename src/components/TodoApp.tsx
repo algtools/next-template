@@ -3,12 +3,7 @@
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import type { ApiEnvelope, Task, TaskUpsertInput } from "@/lib/api/tasks";
@@ -244,12 +239,6 @@ export function TodoApp({
 					) : null}
 				</ul>
 			</CardContent>
-
-			<CardFooter className="justify-end">
-				<span className="text-xs text-muted-foreground">
-					Synced via Next.js Route Handlers (`/api/tasks`) to the upstream API.
-				</span>
-			</CardFooter>
 		</Card>
 	);
 }
