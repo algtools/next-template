@@ -1,7 +1,13 @@
 name: CI
 
 on:
+  # Avoid duplicate workflow runs when a PR is open:
+  # pushes to feature branches trigger both `push` and `pull_request`.
+  # We only run `push` CI on long-lived branches, and rely on `pull_request` for feature work.
   push:
+    branches:
+      - dev
+      - main
   pull_request:
   workflow_dispatch:
 
