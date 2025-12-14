@@ -3,7 +3,7 @@ import type { Task } from "@/lib/api/tasks";
 
 export function HomeView({ initialTasks }: { initialTasks: Task[] }) {
 	return (
-		<div className="min-h-screen px-6 py-12 font-(family-name:--font-geist-sans)">
+		<div className="min-h-screen px-4 py-8 font-(family-name:--font-geist-sans) sm:px-6 sm:py-12">
 			<main className="mx-auto w-full max-w-2xl">
 				<header className="mb-8">
 					<h1 className="text-3xl font-semibold tracking-tight">Tasks</h1>
