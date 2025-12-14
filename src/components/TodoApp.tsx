@@ -246,9 +246,6 @@ export function TodoApp({
 			</CardContent>
 
 			<CardFooter className="justify-end">
-				<span className="text-xs text-muted-foreground">
-					Synced via Next.js Route Handlers (`/api/tasks`) to the upstream API.
-				</span>
 			</CardFooter>
 		</Card>
 	);
