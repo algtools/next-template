@@ -123,6 +123,19 @@ describe("TodoApp", () => {
 		expect(screen.getByText("No tasks yet.")).toBeInTheDocument();
 	});
 
+	it("renders the add form with mobile-friendly layout", () => {
+		renderApp();
+
+		const form = screen.getByLabelText("New task").closest("form");
+		expect(form).not.toBeNull();
+		const formElement = form as HTMLFormElement;
+		expect(formElement).toHaveClass("flex-col");
+
+		const addButton = screen.getByRole("button", { name: "Add" });
+		expect(addButton).toHaveClass("w-full");
+		expect(addButton).toHaveClass("sm:w-auto");
+	});
+
 	it("toggles a todo completed", async () => {
 		const user = userEvent.setup();
 		renderApp();
