@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { TodoApp } from "./TodoApp";
 import { SWRConfig } from "swr";
 import type { Task } from "@/lib/api/tasks";
+import { axe } from "vitest-axe";
 
 describe("TodoApp", () => {
 	let tasks: Task[];
@@ -96,12 +97,20 @@ describe("TodoApp", () => {
 	});
 
 	function renderApp(opts?: { initialTasks?: Task[] }) {
-		render(
+		return render(
 			<SWRConfig value={{ provider: () => new Map(), dedupingInterval: 0 }}>
 				<TodoApp initialTasks={opts?.initialTasks ?? []} />
 			</SWRConfig>,
 		);
 	}
+
+	it("has no obvious accessibility violations", async () => {
+		const { container } = renderApp();
+		// Ensure the initial empty-state content is present before scanning.
+		await screen.findByText("No tasks yet.");
+		const results = await axe(container);
+		expect(results.violations).toEqual([]);
+	});
 
 	it("adds a todo", async () => {
 		const user = userEvent.setup();
