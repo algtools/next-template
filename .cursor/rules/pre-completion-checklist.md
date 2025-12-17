@@ -11,6 +11,11 @@
 - ✅ Run `pnpm run typecheck` - ensure all type checks pass (green)
 - ✅ Run `pnpm run test` - ensure all tests pass (green)
 
+### 1.1 Accessibility Quality Gate (Axe)
+
+- ✅ For any new/changed UI component or view, add/update an Axe test in Vitest (e.g. `axe(container)` and assert `violations` is `[]`)
+- ✅ Treat accessibility tests as first-class unit tests: they MUST be kept up-to-date and MUST be green in CI
+
 ### 2. Update Storybook Stories
 
 - ✅ Create/update Storybook stories for any new or modified components

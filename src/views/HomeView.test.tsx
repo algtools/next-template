@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { cleanup } from "@testing-library/react";
 import { HomeView } from "./HomeView";
 import type { Task } from "@/lib/api/tasks";
+import { axe } from "vitest-axe";
 
 describe("HomeView", () => {
 	afterEach(() => {
@@ -18,6 +19,14 @@ describe("HomeView", () => {
 				"A tiny Tasks example: add tasks, mark them complete, and remove them. Data is synced with the backend API.",
 			),
 		).toBeInTheDocument();
+	});
+
+	it("has no obvious accessibility violations", async () => {
+		const { container } = render(<HomeView initialTasks={[]} />);
+		// Sanity check that interactive controls exist before scanning.
+		expect(screen.getByLabelText("New task")).toBeInTheDocument();
+		const results = await axe(container);
+		expect(results.violations).toEqual([]);
 	});
 
 	it("renders with initial tasks", () => {
