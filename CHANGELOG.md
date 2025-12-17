@@ -1,3 +1,10 @@
+# [1.1.0-rc.1](https://github.com/algtools/next-template/compare/v1.0.0...v1.1.0-rc.1) (2025-12-17)
+
+
+### Features
+
+* Add vitest-axe for accessibility testing ([474f124](https://github.com/algtools/next-template/commit/474f124e75dac2375b64f762ffc804b223fc010a))
+
 # 1.0.0 (2025-12-14)
 
 
@@ -6,13 +13,19 @@
 * adding cf build script ([e4304da](https://github.com/algtools/next-template/commit/e4304dae686a6cabe53f20a6a88d73f6d6d1dbbe))
 * update CI workflow to skip Chromatic publishing on 'dev' branch ([17b1390](https://github.com/algtools/next-template/commit/17b1390591887196d224e5b7e6f214b824b93372))
 
-
 ### Features
 
 * Add core functionality ([1cfb1d8](https://github.com/algtools/next-template/commit/1cfb1d8bb6bd41aa3e7d2808b143d41c56d183dd))
 * add TodoApp component with local storage support and UI enhancements ([dd9a9e6](https://github.com/algtools/next-template/commit/dd9a9e68c5bccca24531aa595efd47143bc59ba4))
 * integrate storybook ([72c57c8](https://github.com/algtools/next-template/commit/72c57c8bc2114ba1bfa9e993f479edf5198ec87c))
 * Integrate SWR for data fetching and update TodoApp ([ee15a61](https://github.com/algtools/next-template/commit/ee15a6143cea5dacef562c97ee6ed7cd8f7241e6))
+
+# [1.0.0-rc.5](https://github.com/algtools/next-template/compare/v1.0.0-rc.4...v1.0.0-rc.5) (2025-12-17)
+
+
+### Features
+
+* Add vitest-axe for accessibility testing ([474f124](https://github.com/algtools/next-template/commit/474f124e75dac2375b64f762ffc804b223fc010a))
 
 # [1.0.0-rc.4](https://github.com/algtools/next-template/compare/v1.0.0-rc.3...v1.0.0-rc.4) (2025-12-14)
 
