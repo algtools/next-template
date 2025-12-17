@@ -26,10 +26,7 @@ jobs:
         with:
           fetch-depth: 0
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          # Version can also be read from package.json packageManager field
-          # but keeping explicit for clarity and to match lockfile version
+        # Version is automatically read from package.json packageManager field
       - uses: actions/setup-node@v4
         with:
           node-version: 20
