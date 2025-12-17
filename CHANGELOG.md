@@ -1,3 +1,10 @@
+# [1.0.0-rc.5](https://github.com/algtools/next-template/compare/v1.0.0-rc.4...v1.0.0-rc.5) (2025-12-17)
+
+
+### Features
+
+* Add vitest-axe for accessibility testing ([474f124](https://github.com/algtools/next-template/commit/474f124e75dac2375b64f762ffc804b223fc010a))
+
 # [1.0.0-rc.4](https://github.com/algtools/next-template/compare/v1.0.0-rc.3...v1.0.0-rc.4) (2025-12-14)
 
 
