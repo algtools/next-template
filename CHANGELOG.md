@@ -1,3 +1,10 @@
+# [1.2.0-rc.1](https://github.com/algtools/next-template/compare/v1.1.0...v1.2.0-rc.1) (2025-12-18)
+
+
+### Features
+
+* Specify pnpm version in package.json and CI ([20a3799](https://github.com/algtools/next-template/commit/20a379955cde17c1134e5033a06361c9feeebbda))
+
 # [1.1.0](https://github.com/algtools/next-template/compare/v1.0.0...v1.1.0) (2025-12-17)
 
 
