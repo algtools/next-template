@@ -1,9 +1,17 @@
-# [1.1.0-rc.2](https://github.com/algtools/next-template/compare/v1.1.0-rc.1...v1.1.0-rc.2) (2025-12-17)
+# [1.1.0](https://github.com/algtools/next-template/compare/v1.0.0...v1.1.0) (2025-12-17)
 
 
 ### Features
 
+* Add vitest-axe for accessibility testing ([474f124](https://github.com/algtools/next-template/commit/474f124e75dac2375b64f762ffc804b223fc010a))
+
+# [1.1.0-rc.2](https://github.com/algtools/next-template/compare/v1.1.0-rc.1...v1.1.0-rc.2) (2025-12-17)
+
 * Specify pnpm version in package.json and CI ([20a3799](https://github.com/algtools/next-template/commit/20a379955cde17c1134e5033a06361c9feeebbda))
+
+
+### Features
+
 
 # [1.1.0-rc.1](https://github.com/algtools/next-template/compare/v1.0.0...v1.1.0-rc.1) (2025-12-17)
 
