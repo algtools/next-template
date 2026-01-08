@@ -1,3 +1,10 @@
+# [1.2.0-rc.2](https://github.com/algtools/next-template/compare/v1.2.0-rc.1...v1.2.0-rc.2) (2026-01-08)
+
+
+### Features
+
+* Integrate Sentry for error tracking and performance monitoring ([bfb46cd](https://github.com/algtools/next-template/commit/bfb46cd910cfc71785eac562dfd9ca9a9979d4b2))
+
 # [1.2.0-rc.1](https://github.com/algtools/next-template/compare/v1.1.0...v1.2.0-rc.1) (2025-12-18)
 
 
