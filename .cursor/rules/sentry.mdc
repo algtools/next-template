@@ -1,21 +1,179 @@
 ---
 alwaysApply: true
 ---
-These examples should be used as guidance when configuring Sentry functionality within a project.
+
+# Sentry Integration Guide for Next.js + Cloudflare Workers
+
+This guide covers the complete Sentry integration for Next.js applications deployed to Cloudflare Workers with multi-environment support.
+
+## Environment Variables
+
+Set these environment variables in your Cloudflare Worker configuration:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `NEXT_PUBLIC_SENTRY_DSN` | Your Sentry DSN from project settings | `https://xxx@o123.ingest.sentry.io/456` |
+| `NEXT_PUBLIC_ENVIRONMENT` | Environment tag for Sentry events | `development` or `production` |
+
+### Cloudflare Workers Setup
+
+**For `dev` branch worker:**
+```
+NEXT_PUBLIC_SENTRY_DSN=https://your-dsn@sentry.io/project
+NEXT_PUBLIC_ENVIRONMENT=development
+```
+
+**For `main` branch worker:**
+```
+NEXT_PUBLIC_SENTRY_DSN=https://your-dsn@sentry.io/project
+NEXT_PUBLIC_ENVIRONMENT=production
+```
+
+## Configuration Files
+
+### 1. Client-side: `src/instrumentation-client.ts`
+
+```typescript
+import * as Sentry from "@sentry/nextjs";
+
+const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+const environment =
+  process.env.NEXT_PUBLIC_ENVIRONMENT || process.env.NODE_ENV || "development";
+const isDevelopment = environment === "development";
+
+Sentry.init({
+  dsn,
+  environment,
+  integrations: [Sentry.replayIntegration()],
+  tracesSampleRate: isDevelopment ? 1.0 : 0.2,
+  enableLogs: true,
+  replaysSessionSampleRate: isDevelopment ? 1.0 : 0.1,
+  replaysOnErrorSampleRate: 1.0,
+  sendDefaultPii: true,
+});
+
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+```
+
+### 2. Server-side: `sentry.server.config.ts`
+
+```typescript
+import * as Sentry from "@sentry/nextjs";
+
+const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+const environment =
+  process.env.NEXT_PUBLIC_ENVIRONMENT || process.env.NODE_ENV || "development";
+const isDevelopment = environment === "development";
+
+Sentry.init({
+  dsn,
+  environment,
+  tracesSampleRate: isDevelopment ? 1.0 : 0.2,
+  enableLogs: true,
+  sendDefaultPii: true,
+});
+```
+
+### 3. Edge: `sentry.edge.config.ts`
+
+```typescript
+import * as Sentry from "@sentry/nextjs";
+
+const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
+const environment =
+  process.env.NEXT_PUBLIC_ENVIRONMENT || process.env.NODE_ENV || "development";
+const isDevelopment = environment === "development";
+
+Sentry.init({
+  dsn,
+  environment,
+  tracesSampleRate: isDevelopment ? 1.0 : 0.2,
+  enableLogs: true,
+  sendDefaultPii: true,
+});
+```
+
+### 4. Build Config: `next.config.ts`
+
+```typescript
+import { withSentryConfig } from "@sentry/nextjs";
+import type { NextConfig } from "next";
+
+const sentryEnvironment =
+  process.env.NEXT_PUBLIC_ENVIRONMENT || process.env.NODE_ENV || "development";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+};
+
+export default withSentryConfig(nextConfig, {
+  org: "your-org",
+  project: "your-project",
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  tunnelRoute: "/monitoring",
+  release: {
+    name: `your-project@${sentryEnvironment}`,
+  },
+  webpack: {
+    automaticVercelMonitors: true,
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
+});
+```
+
+## Sample Rates by Environment
+
+| Environment | Traces | Replays (Session) | Replays (Error) |
+|-------------|--------|-------------------|-----------------|
+| `development` | 100% | 100% | 100% |
+| `production` | 20% | 10% | 100% |
+
+## Test Coverage
+
+Exclude Sentry instrumentation files from test coverage in `vitest.config.ts`:
+
+```typescript
+coverage: {
+  exclude: [
+    // ... other excludes
+    "src/instrumentation*.ts",
+  ],
+}
+```
+
+---
+
 # Exception Catching
+
 Use `Sentry.captureException(error)` to capture an exception and log the error in Sentry.
-Use this in try catch blocks or areas where exceptions are expected
+Use this in try catch blocks or areas where exceptions are expected.
+
+```typescript
+try {
+  await riskyOperation();
+} catch (error) {
+  Sentry.captureException(error);
+  throw error; // Re-throw if needed
+}
+```
+
 # Tracing Examples
-Spans should be created for meaningful actions within applications like button clicks, API calls, and function calls
-Use the `Sentry.startSpan` function to create a span
-Child spans can exist within a parent span
+
+Spans should be created for meaningful actions within applications like button clicks, API calls, and function calls.
+Use the `Sentry.startSpan` function to create a span.
+Child spans can exist within a parent span.
+
 ## Custom Span instrumentation in component actions
+
 The `name` and `op` properties should be meaningful for the activities in the call.
-Attach attributes based on relevant information and metrics from the request
-```javascript
+Attach attributes based on relevant information and metrics from the request.
+
+```typescript
 function TestComponent() {
   const handleTestButtonClick = () => {
-    // Create a transaction/span to measure performance
     Sentry.startSpan(
       {
         op: "ui.click",
@@ -24,7 +182,6 @@ function TestComponent() {
       (span) => {
         const value = "some config";
         const metric = "some metric";
-        // Metrics can be added to the span
         span.setAttribute("config", value);
         span.setAttribute("metric", metric);
         doSomething();
@@ -38,11 +195,11 @@ function TestComponent() {
   );
 }
 ```
+
 ## Custom span instrumentation in API calls
-The `name` and `op` properties should be meaningful for the activities in the call.
-Attach attributes based on relevant information and metrics from the request
-```javascript
-async function fetchUserData(userId) {
+
+```typescript
+async function fetchUserData(userId: string) {
   return Sentry.startSpan(
     {
       op: "http.client",
@@ -56,35 +213,34 @@ async function fetchUserData(userId) {
   );
 }
 ```
+
 # Logs
-Where logs are used, ensure Sentry is imported using `import * as Sentry from "@sentry/nextjs"`
-Enable logging in Sentry using `Sentry.init({ enableLogs: true })`
-Reference the logger using `Sentry.logger`
-Sentry offers a consoleLoggingIntegration that can be used to log specific console error types automatically without instrumenting the individual logger calls
-## Configuration
-In NextJS the client side Sentry initialization is in `instrumentation-client.ts`, the server initialization is in `sentry.server.config.ts` and the edge initialization is in `sentry.edge.config.ts`
-Initialization does not need to be repeated in other files, it only needs to happen the files mentioned above. You should use `import * as Sentry from "@sentry/nextjs"` to reference Sentry functionality
-### Baseline
-```javascript
-import * as Sentry from "@sentry/nextjs";
+
+Where logs are used, ensure Sentry is imported using `import * as Sentry from "@sentry/nextjs"`.
+Logging is enabled via `Sentry.init({ enableLogs: true })`.
+Reference the logger using `Sentry.logger`.
+
+## Logger Integration (optional)
+
+To automatically capture console logs:
+
+```typescript
 Sentry.init({
-  dsn: "https://examplePublicKey@o0.ingest.sentry.io/0",
-  enableLogs: true,
-});
-```
-### Logger Integration
-```javascript
-Sentry.init({
-  dsn: "https://examplePublicKey@o0.ingest.sentry.io/0",
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   integrations: [
-    // send console.log, console.error, and console.warn calls as logs to Sentry
     Sentry.consoleLoggingIntegration({ levels: ["log", "error", "warn"] }),
   ],
 });
 ```
+
 ## Logger Examples
-`logger.fmt` is a template literal function that should be used to bring variables into the structured logs.
-```javascript
+
+`logger.fmt` is a template literal function for structured logs with variables.
+
+```typescript
+import * as Sentry from "@sentry/nextjs";
+const logger = Sentry.logger;
+
 logger.trace("Starting database connection", { database: "users" });
 logger.debug(logger.fmt`Cache miss for user: ${userId}`);
 logger.info("Updated profile", { profileId: 345 });
@@ -101,3 +257,13 @@ logger.fatal("Database connection pool exhausted", {
   activeConnections: 100,
 });
 ```
+
+# Important Notes
+
+1. **Initialization**: Only initialize Sentry in the three config files mentioned above. Use `import * as Sentry from "@sentry/nextjs"` to reference Sentry functionality in other files.
+
+2. **DSN Security**: The DSN is safe to expose in client-side code. It only allows sending events, not reading them.
+
+3. **Environment Filtering**: Use the `environment` filter in Sentry dashboard to separate dev and production events.
+
+4. **Source Maps**: Source maps are automatically uploaded during CI builds when `SENTRY_AUTH_TOKEN` is set.
