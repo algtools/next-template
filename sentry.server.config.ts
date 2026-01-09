@@ -4,14 +4,16 @@
 
 import * as Sentry from "@sentry/nextjs";
 
-// Determine environment from NEXT_PUBLIC_ENVIRONMENT (set in Cloudflare Worker config)
-// Set NEXT_PUBLIC_ENVIRONMENT=development for dev branch, NEXT_PUBLIC_ENVIRONMENT=production for main branch
+// Environment variables (set in Cloudflare Worker config or .env)
+// NEXT_PUBLIC_SENTRY_DSN: Your Sentry DSN from project settings
+// NEXT_PUBLIC_ENVIRONMENT: "development" for dev branch, "production" for main branch
+const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 const environment =
 	process.env.NEXT_PUBLIC_ENVIRONMENT || process.env.NODE_ENV || "development";
 const isDevelopment = environment === "development";
 
 Sentry.init({
-	dsn: "https://4a1f0b08fb8302648bd158aa247bd44f@o4510105954680832.ingest.us.sentry.io/4510675820544000",
+	dsn,
 
 	// Tag events with the environment (dev or production)
 	environment,

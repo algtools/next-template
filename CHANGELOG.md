@@ -1,3 +1,10 @@
+# [1.4.0-rc.1](https://github.com/algtools/next-template/compare/v1.3.0...v1.4.0-rc.1) (2026-01-09)
+
+
+### Features
+
+* add Sentry integration prompt and use env var for DSN ([48c5728](https://github.com/algtools/next-template/commit/48c5728bb87851c2683f74f92f18b7a021a6dbbc))
+
 # [1.3.0](https://github.com/algtools/next-template/compare/v1.2.0...v1.3.0) (2026-01-09)
 
 
