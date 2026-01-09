@@ -21,6 +21,8 @@ export default defineConfig({
 				"src/components/ui/**",
 				// Next.js App Router entrypoints/route wiring (typically thin wrappers)
 				"src/app/**",
+				// Sentry instrumentation files (initialization code, hard to test meaningfully)
+				"src/instrumentation*.ts",
 			],
 			thresholds: {
 				lines: 85,
