@@ -1,3 +1,10 @@
+# [1.2.0-rc.3](https://github.com/algtools/next-template/compare/v1.2.0-rc.2...v1.2.0-rc.3) (2026-01-09)
+
+
+### Features
+
+* Enhance Sentry configuration with environment detection ([bc818f2](https://github.com/algtools/next-template/commit/bc818f247d2d550aa1f6433fb797ebee0921508a))
+
 # [1.2.0-rc.2](https://github.com/algtools/next-template/compare/v1.2.0-rc.1...v1.2.0-rc.2) (2026-01-08)
 
 
