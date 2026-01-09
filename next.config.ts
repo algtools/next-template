@@ -1,6 +1,11 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
+// Determine environment from NEXT_PUBLIC_ENVIRONMENT (set in Cloudflare Worker config)
+// Set NEXT_PUBLIC_ENVIRONMENT=development for dev branch, NEXT_PUBLIC_ENVIRONMENT=production for main branch
+const sentryEnvironment =
+	process.env.NEXT_PUBLIC_ENVIRONMENT || process.env.NODE_ENV || "development";
+
 const nextConfig: NextConfig = {
 	/* config options here */
 };
@@ -27,6 +32,11 @@ export default withSentryConfig(nextConfig, {
 	// Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
 	// side errors will fail.
 	tunnelRoute: "/monitoring",
+
+	// Set the release name based on environment for better tracking in Sentry
+	release: {
+		name: `next-template@${sentryEnvironment}`,
+	},
 
 	webpack: {
 		// Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
